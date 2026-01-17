@@ -2,29 +2,55 @@
 document.addEventListener("DOMContentLoaded", () => {
     
     chat=document.getElementById("chat");
-    const buton = document.getElementById("SendToClient");
-    buton.addEventListener("click", () => { sendData() });
+    //const buton = document.getElementById("SendToClient");
+    //buton.addEventListener("click", () => { sendData() });
     
+    // Helper: convert ArrayBuffer/Uint8Array to Base64
+    function arrayBufferToBase64(buf) {
+        return btoa(String.fromCharCode(...new Uint8Array(buf)));
+    }
+
+
+    
+
     function sendData() {
         const text=document.getElementById("mesaj_server").value;
-        const data = {
-            message: text
-        };
-
+        
+        // Show the message bubble immediately
         const bubble = document.createElement("div");
-            bubble.id="server-messages"
-            bubble.className = "message-bubble-right";
-            bubble.textContent = text;
-            chat.appendChild(bubble);
+        bubble.id = "server-messages";
+        bubble.className = "message-bubble-right";
+        bubble.textContent = text;
+        chat.appendChild(bubble);
 
-        fetch("http://localhost:8080/message", {
+        fetch("http://localhost:5123/plain_text", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        })
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                plainText: text 
+            })
+            })
         .then(res => res.json())
-        return;
-    }  
+        .then(encryptedData => {
+            console.log("Mesaj  criptat din server backend:", encryptedData);
+             fetch("http://localhost:8080/message", {
+            method: "POST",
+            headers: { "Content-Type": "application/json"},
+            body: JSON.stringify({
+                message: encryptedData.message,
+                iv: encryptedData.iv,
+                authTag: encryptedData.authTag
+          })
+        }).then(res => res.json())
+            .then(data => {
+            console.log("Response de la client /message: ",data);
+            });  
+        })
+        .catch(err => console.error(err));
+        
+    }
 
     function fetchMessages() {
     fetch(`http://localhost:5123/get_messages`)
@@ -39,6 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
             
             fetchMessages();
         });
+        return;
     }
     fetchMessages()
 });
