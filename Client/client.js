@@ -4,8 +4,18 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const EventEmitter = require('events');
+const crypto = require('crypto');
 const messageEvents = new EventEmitter();
 let messages_list=[];
+let aesKey_Moldo = null;
+
+function base64urlToBuffer(base64url) {
+    // Înlocuiește caracterele specifice base64url
+    let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+    // adaugă padding
+    while (base64.length % 4) base64 += '=';
+    return Buffer.from(base64, 'base64');
+}
 
 
 const server = http.createServer((req, res) => {
@@ -41,11 +51,38 @@ const server = http.createServer((req, res) => {
     res.end(html);
   } 
 
-  
+  //Moldo
+  if (req.url === '/MoldoTest' && req.method === 'POST') {
+    let body = '';
+
+    // Colectăm datele din cererea POST
+    req.on('data', chunk => {
+      body += chunk;
+    });
+
+    req.on('end', () => {
+      try {
+        // Parsează corpul cererii JSON
+        const data = JSON.parse(body);
+        const receivedKey = data.aesKey;
+
+        if (receivedKey) {
+          // Salvează cheia AES în memoria serverului
+          aesKey_Moldo = receivedKey;
+          console.log("~~~Moldo: Moldoveisan test for aeskey: ",aesKey_Moldo.k);
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ message: `Key stored successfully in memory!`, aesKey:aesKey_Moldo}));
+        } else {
+          res.statusCode = 400;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ message: 'No key provided' }));}
+        }
+        catch (error){}})}
   
   
   if (req.method === 'POST' && req.url === '/message'){
-      console.log("am intrat in /message");
+      console.log("~~~Moldo: am intrat in /message");
       let body = "";
   
       req.on("data", chunk => {
@@ -56,20 +93,20 @@ const server = http.createServer((req, res) => {
               console.log("payload de la server:", JSON.parse(body))
               const received = JSON.parse(body);
               console.log("Mesaj primit: ",received.message);
-  
-              /* // Expecting { message: <hex ciphertext>, iv: <hex iv>, authTag: <hex> }
+
+               // Expecting { message: <hex ciphertext>, iv: <hex iv>, authTag: <hex> }
               const encryptedMessage = Buffer.from(received.message, "base64");
               const iv = Buffer.from(received.iv, "base64");
               const authTag = Buffer.from(received.authTag, "base64");
               //let aesKey = getAesKey();
-              let aesKey = null;
-              console.log(aesKey);
+              let aesKey = aesKey_Moldo;
+              console.log("~~~MOLDO: aesKey - teST FINAL}", aesKey_Moldo);
               if (!aesKey) {
                   throw new Error("AES key not yet established on server!");
               }
   
               // Decrypt using AES-256-GCM
-              const decipher = crypto.createDecipheriv("aes-256-gcm", aesKey.export(), iv);
+              const decipher = crypto.createDecipheriv("aes-256-gcm", base64urlToBuffer(aesKey_Moldo.k), iv);
               decipher.setAuthTag(authTag);
   
               let decrypted = decipher.update(encryptedMessage);
@@ -78,11 +115,11 @@ const server = http.createServer((req, res) => {
               const decryptedText = decrypted.toString("utf8");
   
               // Store decrypted message
-              //messages_list.push(decryptedText); */
+              messages_list.push(decryptedText); 
 
-              messages_list.push(received.message);
+              //messages_list.push(received.message);
               
-              messageEvents.emit('{Server}Data Modified');
+              messageEvents.emit('{Client}Data Modified');
   
               res.writeHead(200, { "Content-Type": "application/json" });
               res.end(JSON.stringify({

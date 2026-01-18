@@ -2,8 +2,8 @@
 document.addEventListener("DOMContentLoaded", () => {
     
     chat=document.getElementById("chat");
-    //const buton = document.getElementById("SendToClient");
-    //buton.addEventListener("click", () => { sendData() });
+    const buton = document.getElementById("SendToClient");
+    buton.addEventListener("click", () => { sendData() });
     
     // Helper: convert ArrayBuffer/Uint8Array to Base64
     function arrayBufferToBase64(buf) {

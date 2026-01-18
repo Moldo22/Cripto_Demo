@@ -2,6 +2,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     
     chat=document.getElementById("chat");
+    let aesKey=null;
     const buton = document.getElementById("SendToServer");
     buton.addEventListener("click", () => { sendData() });
 
@@ -10,10 +11,39 @@ document.addEventListener("DOMContentLoaded", () => {
         return btoa(String.fromCharCode(...new Uint8Array(buf)));
     }
 
+    function sendAesKey(){
+        aesKey = window.getAesKey();
+        console.log("valoare aes",aesKey);
+        if (aesKey!=null){
+            crypto.subtle.exportKey("jwk", aesKey)
+                .then(exportedKey => {
+                    // 📤 abia AICI avem cheia reală
+                    return fetch('http://localhost:8080/MoldoTest', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ aesKey: exportedKey })
+                    });
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Key received by server:', data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+        else 
+        {
+            setTimeout(sendAesKey,1000)
+        }
+    }
+
 
     // Encrypt a message using AES-GCM
     function encryptMessage(plainText) {
-        const aesKey = window.getAesKey();
+        aesKey = window.getAesKey();
         if (!aesKey) throw new Error("AES key not available");
 
         const iv = crypto.getRandomValues(new Uint8Array(12)); // 12 bytes IV for AES-GCM
@@ -40,7 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function sendData() {
         const text=document.getElementById("mesaj_client").value;
-
         // Show the message bubble immediately
         const bubble = document.createElement("div");
         bubble.id = "client-messages";
@@ -89,4 +118,5 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
 }
     fetchMessages()
+    sendAesKey()
 });
