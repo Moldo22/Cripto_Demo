@@ -11,14 +11,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return btoa(String.fromCharCode(...new Uint8Array(buf)));
     }
 
+    // Send AES key to backend
     function sendAesKey(){
         aesKey = window.getAesKey();
-        console.log("valoare aes",aesKey);
+        //console.log("aes value: ",aesKey);
         if (aesKey!=null){
             crypto.subtle.exportKey("jwk", aesKey)
                 .then(exportedKey => {
-                    // 📤 abia AICI avem cheia reală
-                    return fetch('http://localhost:8080/MoldoTest', {
+                    return fetch('http://localhost:8080/aes_key', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Key received by server:', data);
+                    console.log('Key received by backend:', data);
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -48,8 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const iv = crypto.getRandomValues(new Uint8Array(12)); // 12 bytes IV for AES-GCM
         const encoded = new TextEncoder().encode(plainText);
-        console.log("AES Key Client ");
-        console.log(aesKey);
+        
         return crypto.subtle.encrypt(
             { name: "AES-GCM", iv: iv },
             aesKey,

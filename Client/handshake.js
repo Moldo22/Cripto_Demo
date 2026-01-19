@@ -40,17 +40,8 @@ function fetchServerEcdhPublicKey() {
   .then(data => {
     serverEcdhPublicKey = data.serverEcdhPublicKey;
     
-    
-    //callback();
     fetchSignature()
   })
-  /* .catch(err => {
-    console.log('server not ready yet');
-    console.log(err);
-    //setTimeout(() => fetchServerRsaKey(), 10000);
-  }) */
-
-   
   }
 
 function fetchSignature(){
@@ -82,9 +73,6 @@ function fetchSignature(){
     .then(data => {
       const signatureBase64 = data.signature;
       const serverECDHPubBase64 = data.serverECDHPub;
-
-      //console.log("Server ECDH public key:", serverECDHPubBase64);
-      //console.log("Server signature:", signatureBase64);
       verifyServerSignature(serverECDHPubBase64, clientECDHPubRaw, clientNonce, signatureBase64 );
     })
     .catch(err => console.error("Handshake failed:", err));
@@ -120,8 +108,7 @@ function verifyServerSignature(serverECDHPubBase64, clientECDHPubRaw, clientNonc
       concatBuf
     );
   }).then(isValid => {
-    console.log("the signature is ");
-    console.log(isValid);
+    console.log("The signature is valid");
     generateSharedSecret();
 
   }).catch(err => {
@@ -174,14 +161,14 @@ function generateSharedSecret() {
   })
   .then(derivedAesKey => {
     window.aesKey = derivedAesKey;
-    console.log("Shared secret successfully derived and AES key created!");
-    console.log(window.aesKey);
+    console.log("Shared secret successfully derived and AES key created:");
+    //console.log(window.aesKey);
 
       //modified from here
       return crypto.subtle.exportKey("raw", derivedAesKey);
 })
 .then(rawKey => {
-      // 🔽 Convert raw bytes (ArrayBuffer) to Base64
+      //Convert raw bytes (ArrayBuffer) to Base64
       var bytes = new Uint8Array(rawKey);
       var binary = "";
       for (var i = 0; i < bytes.length; i++) {
@@ -190,29 +177,12 @@ function generateSharedSecret() {
       var base64Key = btoa(binary);
 
       console.log("AES key as Base64:", base64Key);
-
-      // 🔽 Example: send it to backend
-      fetch("http://localhost:8080/save_key", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: base64Key })
-      })
-      .then(res => res.json())
-      .then(data => console.log("Server response:", data))
-      .catch(err => console.error(err));
     
 
       })
       .catch(err => {
         console.error("Error generating shared secret:", err);
       });
-
-
-  
 }
   
-
-
-
-
 fetchServerEcdhPublicKey();

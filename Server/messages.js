@@ -5,14 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const buton = document.getElementById("SendToClient");
     buton.addEventListener("click", () => { sendData() });
     
-    // Helper: convert ArrayBuffer/Uint8Array to Base64
-    function arrayBufferToBase64(buf) {
-        return btoa(String.fromCharCode(...new Uint8Array(buf)));
-    }
-
-
-    
-
     function sendData() {
         const text=document.getElementById("mesaj_server").value;
         
@@ -23,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
         bubble.textContent = text;
         chat.appendChild(bubble);
 
+        //Send text to backend for encryption
         fetch("http://localhost:5123/plain_text", {
             method: "POST",
             headers: {
@@ -34,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
             })
         .then(res => res.json())
         .then(encryptedData => {
-            console.log("Mesaj  criptat din server backend:", encryptedData);
+            console.log("Message crypted from server backend:", encryptedData);
              fetch("http://localhost:8080/message", {
             method: "POST",
             headers: { "Content-Type": "application/json"},
@@ -45,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
           })
         }).then(res => res.json())
             .then(data => {
-            console.log("Response de la client /message: ",data);
+            console.log("Response from client /message: ",data);
             });  
         })
         .catch(err => console.error(err));

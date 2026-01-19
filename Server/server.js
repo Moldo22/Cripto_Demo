@@ -4,35 +4,15 @@ const fs = require('fs');
 const EventEmitter = require('events');
 const crypto = require('crypto');
 const messageEvents = new EventEmitter();
-const { RSA_PRIVATE_KEY, RSA_PUBLIC_KEY } = require("./rsa_keys.js");
+const { RSA_PRIVATE_KEY } = require("./rsa_keys.js");
 
 let messages_list= [];
 
 let serverECDH;
 let aesKey;
-let plainText;
 
 // Encrypt a message using AES-GCM
     function encryptMessage(plainText) {
-
-        /* 
-        const encoded = new TextEncoder().encode(plainText);
-        console.log("AES Key Server ",aesKey);
-        return crypto.subtle.encrypt(
-            { name: "AES-GCM", iv: iv },
-            aesKey,
-            encoded
-        ).then(encryptedBuffer => {
-            const encryptedBytes = new Uint8Array(encryptedBuffer);
-            // AES-GCM automatically appends 16-byte auth tag at the end
-            const cipher = encryptedBytes.slice(0, -16); // actual ciphertext
-            const authTag = encryptedBytes.slice(-16);   // last 16 bytes are auth tag
-            return {
-                cipher: arrayBufferToBase64(cipher),
-                iv: arrayBufferToBase64(iv),
-                authTag: arrayBufferToBase64(authTag)
-            }
-        }); */
 
         const iv = crypto.randomBytes(12); // Node crypto
         const cipher = crypto.createCipheriv("aes-256-gcm", aesKey, iv);
@@ -87,7 +67,7 @@ const server = http.createServer((req, res) => {
   else if (req.method === 'GET' && req.url === '/api') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ mesaj: 'Salut - Test API' }));
-  }
+  } 
   
   else if (req.method === 'POST' && req.url === '/message'){
     let body = "";
@@ -99,7 +79,7 @@ const server = http.createServer((req, res) => {
     req.on("end", () => {
             const received = JSON.parse(body);
 
-            console.log("mesaj de la client ",received);
+            console.log("Payload from client ",received);
             // Expecting { message: <hex ciphertext>, iv: <hex iv>, authTag: <hex> }
             const encryptedMessage = Buffer.from(received.message, "base64");
             const iv = Buffer.from(received.iv, "base64");
@@ -124,8 +104,8 @@ const server = http.createServer((req, res) => {
 
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(JSON.stringify({
-                status: "ok",
-                message: `Am primit mesajul de la client: "${decryptedText}"`
+                status: "OK",
+                message: "Message received from client."
           
             }));
     })
@@ -142,12 +122,6 @@ const server = http.createServer((req, res) => {
   };
 
   if (req.method === "GET" && req.url === "/handshake/init") {
-    /* // RSA keys for authenticating DH
-    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-      modulusLength: 2048,
-    });
-    // Export public key in PEM format to send to client
-    const exportedPublicKey = publicKey.export({ type: 'pkcs1', format: 'pem' }); */
 
     // Generate ECDH key pair (P-256)
     const ecdh = crypto.createECDH("prime256v1"); // same as P-256
@@ -207,44 +181,6 @@ const server = http.createServer((req, res) => {
   });
   }
 
-/*   if (req.method === "POST" && req.url === "/plain_text") {
-    let body = "";
-
-    req.on("data", chunk => {
-      body += chunk;
-    });
-
-
-    req.on("end", () => {
-      
-        const { plainText } = JSON.parse(body);
-        const encryptedData = encryptMessage(plainText);
-        console.log(encryptedData);
-
-        fetch("http://localhost:8080/message", {
-          method: "POST",
-          headers: { "Content-Type": "application/json"},
-          body: JSON.stringify({
-            message: encryptedData.cipher,
-            iv: encryptedData.iv,
-            authTag: encryptedData.authTag
-          })
-        }).then(res => res.json())
-        .then(data => {
-          console.log(data);
-        }); 
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "ok",
-          message: "Message received"
-        }));
-
-        
-        
-    });
-} */
-
       if (req.method === "POST" && req.url === "/plain_text") {
     let body = "";
 
@@ -257,8 +193,7 @@ const server = http.createServer((req, res) => {
       
         const { plainText } = JSON.parse(body);
         const encryptedData = encryptMessage(plainText);
-        console.log(encryptedData);
-
+        //console.log(encryptedData);
 
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({
@@ -280,15 +215,12 @@ function generateSharedSecret(clientECDHPubBuf){
     try {
     // Derive shared secret
     const sharedSecret = serverECDH.computeSecret(clientECDHPubBuf); // returns a Buffer
-    console.log("Raw shared secret (hex):", sharedSecret.toString("hex"));
+    console.log("AES shared secret (base64):", sharedSecret.toString("base64"));
 
     // Convert to AES key
     // AES-256 expects 32 bytes (256 bits), which matches P-256 output length
     // Node crypto can use SecretKey for AES-GCM
     aesKey = crypto.createSecretKey(sharedSecret);
-    
-    //aesKey = sharedSecret.toString("hex");
-    //console.log("AES key created:", aesKey);
 
     return aesKey;
   } catch (err) {
