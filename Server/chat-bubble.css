@@ -7,6 +7,10 @@ body {
     height: 100vh;            
 }
 
+h1{
+    text-align: center;
+}
+
 #server-messages{
     display: flex;
     flex-direction: column;
@@ -21,6 +25,33 @@ body {
     max-width:100%;
 }
 
+#mesaj_server{
+    position: fixed;
+    bottom: 30px;
+    width: 80%;
+    height: 5%;
+    border-radius: 20px;
+    padding-left: 16px;
+    font-size: 18px;
+    
+}
+
+#SendToClient{
+    border-radius: 20px;
+    position: fixed;
+    bottom: 30px;
+    width: 15%;
+    height: 5%;
+    right: 10px;
+    background-color: #0084FF; 
+    color: white;
+    font-size: 18px;
+}
+
+#SendToClient:hover{
+    background-color:darkcyan;
+}
+
 .message-bubble-left {
     background-color: #0084ff; 
     color: white;    
@@ -28,12 +59,12 @@ body {
     align-items: center;
     border-radius: 20px;
     padding: 8px 12px;
-    margin: 15px 0;
+    margin: 10px 0;
+    margin-top: 10px;
     width: fit-content;
     max-width: 70%;
     font-family: sans-serif;
-    
-    /* Opțional: o mică umbră să pară că "plutește" */
+    font-size: 18px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
@@ -45,9 +76,11 @@ body {
     border-radius: 20px;
     padding: 8px 12px;
     margin-left: auto; 
-    margin-right: 0;
+    margin-right: 10px;
+    margin-top: 10px;
     width: fit-content;
     max-width: 70%;
+    font-size: 18px;
     font-family: sans-serif;
     
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
