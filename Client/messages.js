@@ -4,7 +4,16 @@ document.addEventListener("DOMContentLoaded", () => {
     chat=document.getElementById("chat");
     let aesKey=null;
     const buton = document.getElementById("SendToServer");
+    const input=document.getElementById("mesaj_client");
+    
     buton.addEventListener("click", () => { sendData() });
+
+    input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        sendData();
+    }
+    });
 
     // Helper: convert ArrayBuffer/Uint8Array to Base64
     function arrayBufferToBase64(buf) {
@@ -69,6 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function sendData() {
         const text=document.getElementById("mesaj_client").value;
+        document.getElementById("mesaj_client").value = "";
         // Show the message bubble immediately
         const bubble = document.createElement("div");
         bubble.id = "client-messages";

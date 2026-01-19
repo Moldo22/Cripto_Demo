@@ -3,10 +3,21 @@ document.addEventListener("DOMContentLoaded", () => {
     
     chat=document.getElementById("chat");
     const buton = document.getElementById("SendToClient");
+    const input=document.getElementById("mesaj_server");
+
     buton.addEventListener("click", () => { sendData() });
     
+    input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        sendData();
+    }
+    });
+
     function sendData() {
         const text=document.getElementById("mesaj_server").value;
+        document.getElementById("mesaj_server").value = "";
+
         
         // Show the message bubble immediately
         const bubble = document.createElement("div");
